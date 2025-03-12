@@ -2,8 +2,7 @@ import { beginCell, contractAddress, toNano, TonClient4, WalletContractV4, inter
 import { mnemonicToPrivateKey } from "ton-crypto";
 import { buildOnchainMetadata } from "./utils/jetton-helpers";
 
-import { SampleJetton, storeMint } from "./output/SampleJetton_SampleJetton";
-// import { JettonDefaultWallet, TokenBurn } from "./output/SampleJetton_JettonDefaultWallet";
+import { ICOwithJetton, storeMint, storeSetupICO } from "./output/ICO_ICOwithJetton";
 
 import { printSeparator } from "./utils/print";
 import * as dotenv from "dotenv";
@@ -26,9 +25,9 @@ dotenv.config();
     let deployer_wallet_contract = client4.open(deployer_wallet);
 
     const jettonParams = {
-        name: "TIT",
+        name: "XXX",
         description: "This is ton for ICO test smart contract",
-        symbol: "TEST_ICO_TON",
+        symbol: "XXX",
         image: "https://gateway.pinata.cloud/ipfs/QmUGvSSYZrCZuZW524Z5BrUW5eTnxknkYNAL3X7UXP5djW",
     };
 
@@ -39,7 +38,7 @@ dotenv.config();
     // Compute init data for deployment
     // NOTICE: the parameters inside the init functions were the input for the contract address
     // which means any changes will change the smart contract address as well
-    let init = await SampleJetton.init(deployer_wallet_contract.address, content, max_supply);
+    let init = await ICOwithJetton.init(deployer_wallet_contract.address, content, max_supply);
     let jettonMaster = contractAddress(workchain, init);
     let deployAmount = toNano("0.15");
 
@@ -50,6 +49,18 @@ dotenv.config();
                 $$type: "Mint",
                 amount: supply,
                 receiver: deployer_wallet_contract.address,
+            })
+        )
+        .endCell();
+
+    let setup_ICO = beginCell()
+        .store(
+            storeSetupICO({
+                $$type: "SetupICO",
+                price: toNano('0.01'),
+                start_time: BigInt(0),
+                end_time: BigInt(3 * 24 * 60 * 60),
+                hard_cap: toNano(12345678)
             })
         )
         .endCell();
@@ -79,6 +90,15 @@ dotenv.config();
                     data: init.data,
                 },
                 body: packed_msg,
+            }),
+            internal({
+                to: jettonMaster,
+                value: deployAmount,
+                init: {
+                    code: init.code,
+                    data: init.data,
+                },
+                body: setup_ICO,
             }),
         ],
     });

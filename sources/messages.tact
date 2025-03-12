@@ -1,7 +1,3 @@
-// ==============ICO messages ================== //
-
-// ============== Jetton messages=============== //
-
 struct JettonData {
     total_supply: Int;
     mintable: Bool;
